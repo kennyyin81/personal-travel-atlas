@@ -2,16 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts/core";
-import { EffectScatterChart, LinesChart, MapChart, ScatterChart } from "echarts/charts";
+import { EffectScatterChart, LinesChart, ScatterChart } from "echarts/charts";
 import { GeoComponent, TooltipComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import ChinaData from "china-map-geojson/lib/china";
 import ProvinceData from "china-map-geojson/lib/province";
+import TaiwanCountyData from "@/data/taiwan-counties.geo.json";
 import { motion } from "framer-motion";
 import type { TravelItem } from "@/data/travel";
 import { fadeUp } from "./motion-presets";
 
-echarts.use([CanvasRenderer, EffectScatterChart, GeoComponent, LinesChart, MapChart, ScatterChart, TooltipComponent]);
+echarts.use([CanvasRenderer, EffectScatterChart, GeoComponent, LinesChart, ScatterChart, TooltipComponent]);
 
 type TravelMapProps = {
   items: TravelItem[];
@@ -24,6 +25,7 @@ type GeoFeature = {
   properties?: {
     name?: string;
     cp?: [number, number];
+    county?: string;
   };
   geometry?: unknown;
 };
@@ -38,7 +40,7 @@ type CityFeatureCollection = {
   features: GeoFeature[];
 };
 
-const directAdminRegions = new Set(["北京", "上海", "天津", "重庆", "香港", "澳门", "台湾"]);
+const directAdminRegions = new Set(["北京", "上海", "天津", "重庆", "香港", "澳门"]);
 const directProvinceKeys = new Set(["Beijing", "Shanghai", "Tianjin", "Chongqing", "Xianggang", "Aomen", "Taiwan"]);
 const includeAllFeatureProvinceKeys = new Set(["Hainan"]);
 const directAdminCenters: Record<string, [number, number]> = {
@@ -73,6 +75,79 @@ const cityNameAliases: Record<string, string> = {
   大理白族自治州: "大理",
   陵水黎族自治县: "陵水"
 };
+
+function normalizeTaiwanCountyName(name: string) {
+  const explicitNames: Record<string, string> = {
+    臺北市: "台北市",
+    新北市: "新北市",
+    桃園縣: "桃园市",
+    桃園市: "桃园市",
+    臺中市: "台中市",
+    臺南市: "台南市",
+    高雄市: "高雄市",
+    基隆市: "基隆市",
+    新竹市: "新竹市",
+    嘉義市: "嘉义市",
+    新竹縣: "新竹县",
+    苗栗縣: "苗栗县",
+    彰化縣: "彰化县",
+    南投縣: "南投县",
+    雲林縣: "云林县",
+    嘉義縣: "嘉义县",
+    屏東縣: "屏东县",
+    宜蘭縣: "宜兰县",
+    花蓮縣: "花莲县",
+    臺東縣: "台东县",
+    澎湖縣: "澎湖县",
+    金門縣: "金门县",
+    連江縣: "连江县"
+  };
+
+  return explicitNames[name] ?? name.replace(/臺/g, "台").replace(/縣/g, "县").replace(/蘭/g, "兰");
+}
+
+function collectCoordinatePairs(input: unknown, pairs: [number, number][] = []) {
+  if (!Array.isArray(input)) {
+    return pairs;
+  }
+
+  if (
+    input.length >= 2 &&
+    typeof input[0] === "number" &&
+    typeof input[1] === "number"
+  ) {
+    pairs.push([input[0], input[1]]);
+    return pairs;
+  }
+
+  input.forEach((item) => collectCoordinatePairs(item, pairs));
+  return pairs;
+}
+
+function getGeometryCenter(geometry: unknown): [number, number] | undefined {
+  const pairs = collectCoordinatePairs((geometry as { coordinates?: unknown } | undefined)?.coordinates);
+
+  if (!pairs.length) {
+    return undefined;
+  }
+
+  const bounds = pairs.reduce(
+    (acc, [lng, lat]) => ({
+      minLng: Math.min(acc.minLng, lng),
+      maxLng: Math.max(acc.maxLng, lng),
+      minLat: Math.min(acc.minLat, lat),
+      maxLat: Math.max(acc.maxLat, lat)
+    }),
+    {
+      minLng: Infinity,
+      maxLng: -Infinity,
+      minLat: Infinity,
+      maxLat: -Infinity
+    }
+  );
+
+  return [(bounds.minLng + bounds.maxLng) / 2, (bounds.minLat + bounds.maxLat) / 2];
+}
 
 function normalizeCityName(name: string) {
   return (cityNameAliases[name] ?? name)
@@ -125,6 +200,23 @@ function buildChinaCityGeoJson(): CityFeatureCollection {
       properties: {
         ...feature.properties,
         cp: feature.properties?.cp ?? directAdminCenters[name]
+      }
+    });
+  });
+
+  (TaiwanCountyData as GeoCollection).features?.forEach((feature) => {
+    const countyName = feature.properties?.county;
+
+    if (!countyName) {
+      return;
+    }
+
+    features.push({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        name: normalizeTaiwanCountyName(countyName),
+        cp: feature.properties?.cp ?? getGeometryCenter(feature.geometry)
       }
     });
   });
@@ -203,41 +295,6 @@ export function TravelMap({ items }: TravelMapProps) {
     return map;
   }, [visited]);
 
-  const cityAreaData = useMemo(
-    () =>
-      chinaCityGeoJson.features.map((feature) => {
-        const featureName = feature.properties?.name ?? "";
-        const travelItem = visitedByCityName.get(normalizeCityName(featureName));
-
-        return {
-          name: featureName,
-          value: travelItem ? 1 : 0,
-          item: travelItem,
-          itemStyle: travelItem
-            ? {
-                areaColor: {
-                  type: "linear",
-                  x: 0,
-                  y: 0,
-                  x2: 1,
-                  y2: 1,
-                  colorStops: [
-                    { offset: 0, color: "rgba(81, 255, 246, 0.96)" },
-                    { offset: 0.48, color: "rgba(20, 196, 204, 0.76)" },
-                    { offset: 1, color: "rgba(82, 168, 255, 0.66)" }
-                  ]
-                },
-                borderColor: "rgba(196, 255, 255, 0.96)",
-                borderWidth: 1.25,
-                shadowBlur: 28,
-                shadowColor: "rgba(55, 245, 255, 0.64)"
-              }
-            : undefined
-        };
-      }),
-    [visitedByCityName]
-  );
-
   const visitedAreaRegions = useMemo(
     () =>
       chinaCityGeoJson.features
@@ -266,13 +323,13 @@ export function TravelMap({ items }: TravelMapProps) {
               },
               borderColor: "rgba(232, 255, 255, 0.98)",
               borderWidth: 1.35,
-              shadowBlur: 34,
-              shadowColor: "rgba(80, 255, 244, 0.72)"
+              shadowBlur: isCompactMap ? 0 : 10,
+              shadowColor: "rgba(80, 255, 244, 0.36)"
             }
           };
         })
         .filter(Boolean),
-    [visitedByCityName]
+    [isCompactMap, visitedByCityName]
   );
 
   const dormantCityData = useMemo(
@@ -330,12 +387,23 @@ export function TravelMap({ items }: TravelMapProps) {
       return;
     }
 
-    chart.dispatchAction({
-      type: "geoRoam",
-      componentIndex: 0,
-      zoom: factor,
-      originX: chart.getWidth() / 2,
-      originY: chart.getHeight() / 2
+    const originX = chart.getWidth() / 2;
+    const originY = chart.getHeight() / 2;
+
+    chart.getZr().trigger("mousewheel", {
+      type: "mousewheel",
+      offsetX: originX,
+      offsetY: originY,
+      zrX: originX,
+      zrY: originY,
+      wheelDelta: factor > 1 ? 2 : -2,
+      event: {
+        altKey: false,
+        ctrlKey: false,
+        shiftKey: false,
+        preventDefault() {},
+        stopPropagation() {}
+      }
     });
   };
 
@@ -401,7 +469,7 @@ export function TravelMap({ items }: TravelMapProps) {
 
     chart.setOption({
       backgroundColor: "transparent",
-      animation: !isCompactMap,
+      animation: false,
       tooltip: {
         trigger: "item",
         confine: true,
@@ -454,8 +522,8 @@ export function TravelMap({ items }: TravelMapProps) {
           },
           borderColor: "rgba(194, 220, 232, 0.26)",
           borderWidth: 0.58,
-          shadowBlur: 12,
-          shadowColor: "rgba(0, 0, 0, 0.28)"
+          shadowBlur: 0,
+          shadowColor: "transparent"
         },
         regions: visitedAreaRegions,
         emphasis: {
@@ -471,34 +539,6 @@ export function TravelMap({ items }: TravelMapProps) {
       },
       series: [
         {
-          name: "中国城市",
-          type: "map",
-          map: "china-city-travel",
-          geoIndex: 0,
-          data: cityAreaData,
-          selectedMode: false,
-          label: {
-            show: false
-          },
-          emphasis: {
-            itemStyle: {
-              areaColor: "rgba(57, 226, 226, 0.82)",
-              borderColor: "rgba(255, 255, 255, 0.78)",
-              borderWidth: 1.1,
-              shadowBlur: 22,
-              shadowColor: "rgba(57, 226, 226, 0.44)"
-            },
-            label: {
-              show: false
-            }
-          },
-          itemStyle: {
-            areaColor: "rgba(20, 58, 70, 0.76)",
-            borderColor: "rgba(188, 218, 232, 0.26)",
-            borderWidth: 0.55
-          }
-        },
-        {
           name: "省级边界",
           type: "lines",
           coordinateSystem: "geo",
@@ -508,10 +548,8 @@ export function TravelMap({ items }: TravelMapProps) {
           silent: true,
           lineStyle: {
             color: "rgba(240, 249, 255, 0.72)",
-            width: 1.35,
-            opacity: 0.95,
-            shadowBlur: 12,
-            shadowColor: "rgba(125, 230, 255, 0.28)"
+            width: isCompactMap ? 0.9 : 1.15,
+            opacity: 0.86
           }
         },
         {
@@ -557,12 +595,12 @@ export function TravelMap({ items }: TravelMapProps) {
             scale: isCompactMap ? 3.1 : 4.8,
             period: 4.2
           },
-          showEffectOn: isCompactMap ? "emphasis" : "render",
+          showEffectOn: "emphasis",
           itemStyle: {
             color: "#72fff4",
             borderColor: "#ffffff",
             borderWidth: 1.25,
-            shadowBlur: isCompactMap ? 12 : 28,
+            shadowBlur: isCompactMap ? 8 : 16,
             shadowColor: "rgba(87, 255, 244, 0.96)"
           },
           label: {
@@ -599,7 +637,7 @@ export function TravelMap({ items }: TravelMapProps) {
       chart.dispose();
       chartInstanceRef.current = null;
     };
-  }, [cityAreaData, cityPointData, dormantCityData, isCompactMap, shouldInitChart, visitedAreaRegions]);
+  }, [cityPointData, dormantCityData, isCompactMap, shouldInitChart, visitedAreaRegions]);
 
   return (
     <motion.div
