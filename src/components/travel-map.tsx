@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts/core";
 import { EffectScatterChart, LinesChart, MapChart, ScatterChart } from "echarts/charts";
 import { GeoComponent, TooltipComponent } from "echarts/components";
@@ -166,6 +166,10 @@ function extractBoundaryLines(collection: GeoCollection) {
 }
 
 const provinceBoundaryData = extractBoundaryLines(ChinaData as GeoCollection);
+const mapZoomLimits = {
+  min: 0.82,
+  max: 8
+};
 
 function makeTooltip(item: TravelItem) {
   const tags = item.tags.map((tag) => `<span class="map-tooltip-tag">${tag}</span>`).join("");
@@ -184,6 +188,9 @@ function makeTooltip(item: TravelItem) {
 export function TravelMap({ items }: TravelMapProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const chartInstanceRef = useRef<EChartsInstance | null>(null);
+  const mapWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [shouldInitChart, setShouldInitChart] = useState(false);
+  const [isCompactMap, setIsCompactMap] = useState(false);
 
   const visited = useMemo(
     () => items.filter((item) => item.visited).sort((a, b) => a.date.localeCompare(b.date)),
@@ -270,6 +277,17 @@ export function TravelMap({ items }: TravelMapProps) {
 
   const dormantCityData = useMemo(
     () => {
+      if (isCompactMap) {
+        return supplementalCityAnchors
+          .filter((item) => item.priority)
+          .filter((item) => !visitedByCityName.has(normalizeCityName(item.name)))
+          .map((item) => ({
+            name: item.name,
+            value: item.value as [number, number, number],
+            label: { show: false }
+          }));
+      }
+
       const baseCities = chinaCityGeoJson.features
         .filter((feature) => {
           const featureName = feature.properties?.name ?? "";
@@ -293,7 +311,7 @@ export function TravelMap({ items }: TravelMapProps) {
 
       return [...baseCities, ...supplementalCities];
     },
-    [visitedByCityName]
+    [isCompactMap, visitedByCityName]
   );
 
   const cityPointData = useMemo(
@@ -314,7 +332,7 @@ export function TravelMap({ items }: TravelMapProps) {
 
     chart.dispatchAction({
       type: "geoRoam",
-      componentType: "geo",
+      componentIndex: 0,
       zoom: factor,
       originX: chart.getWidth() / 2,
       originY: chart.getHeight() / 2
@@ -329,6 +347,7 @@ export function TravelMap({ items }: TravelMapProps) {
 
     chart.setOption({
       geo: {
+        id: "travel-china-geo",
         zoom: 1,
         layoutCenter: ["50%", "52%"],
         layoutSize: "100%"
@@ -337,17 +356,52 @@ export function TravelMap({ items }: TravelMapProps) {
   };
 
   useEffect(() => {
-    if (!chartRef.current) {
+    const updateCompactMode = () => setIsCompactMap(window.matchMedia("(max-width: 640px)").matches);
+    updateCompactMode();
+
+    window.addEventListener("resize", updateCompactMode);
+
+    return () => window.removeEventListener("resize", updateCompactMode);
+  }, []);
+
+  useEffect(() => {
+    if (!mapWrapperRef.current || shouldInitChart) {
       return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldInitChart(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "220px 0px" }
+    );
+
+    observer.observe(mapWrapperRef.current);
+
+    return () => observer.disconnect();
+  }, [shouldInitChart]);
+
+  useEffect(() => {
+    if (!chartRef.current || !shouldInitChart) {
+      return;
+    }
+
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.dispose();
+      chartInstanceRef.current = null;
     }
 
     echarts.registerMap("china-city-travel", chinaCityGeoJson as never);
 
-    const chart = echarts.init(chartRef.current, "dark", { renderer: "canvas" });
+    const chart = echarts.init(chartRef.current, "dark", { renderer: "canvas", useDirtyRect: true });
     chartInstanceRef.current = chart;
 
     chart.setOption({
       backgroundColor: "transparent",
+      animation: !isCompactMap,
       tooltip: {
         trigger: "item",
         confine: true,
@@ -377,13 +431,11 @@ export function TravelMap({ items }: TravelMapProps) {
         }
       },
       geo: {
+        id: "travel-china-geo",
         map: "china-city-travel",
         roam: true,
         zoom: 1,
-        scaleLimit: {
-          min: 0.82,
-          max: 8
-        },
+        scaleLimit: mapZoomLimits,
         aspectScale: 0.9,
         layoutCenter: ["50%", "52%"],
         layoutSize: "100%",
@@ -450,7 +502,7 @@ export function TravelMap({ items }: TravelMapProps) {
           name: "省级边界",
           type: "lines",
           coordinateSystem: "geo",
-          zlevel: 4,
+          z: 4,
           polyline: true,
           data: provinceBoundaryData,
           silent: true,
@@ -466,9 +518,9 @@ export function TravelMap({ items }: TravelMapProps) {
           name: "未点亮城市",
           type: "scatter",
           coordinateSystem: "geo",
-          zlevel: 5,
+          z: 5,
           data: dormantCityData,
-          symbolSize: 2.6,
+          symbolSize: isCompactMap ? 1.8 : 2.6,
           itemStyle: {
             color: "rgba(222, 241, 249, 0.24)",
             borderColor: "rgba(222, 241, 249, 0.28)",
@@ -497,28 +549,28 @@ export function TravelMap({ items }: TravelMapProps) {
           name: "已点亮城市",
           type: "effectScatter",
           coordinateSystem: "geo",
-          zlevel: 7,
+          z: 7,
           data: cityPointData,
-          symbolSize: 9,
+          symbolSize: isCompactMap ? 7 : 9,
           rippleEffect: {
             brushType: "stroke",
-            scale: 4.8,
+            scale: isCompactMap ? 3.1 : 4.8,
             period: 4.2
           },
-          showEffectOn: "render",
+          showEffectOn: isCompactMap ? "emphasis" : "render",
           itemStyle: {
             color: "#72fff4",
             borderColor: "#ffffff",
             borderWidth: 1.25,
-            shadowBlur: 28,
+            shadowBlur: isCompactMap ? 12 : 28,
             shadowColor: "rgba(87, 255, 244, 0.96)"
           },
           label: {
-            show: true,
+            show: !isCompactMap,
             formatter: "{b}",
             position: "right",
             color: "#ffffff",
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: 800,
             textBorderColor: "rgba(2, 8, 16, 0.96)",
             textBorderWidth: 3
@@ -534,15 +586,20 @@ export function TravelMap({ items }: TravelMapProps) {
       ]
     });
 
-    const resizeObserver = new ResizeObserver(() => chart.resize());
+    let resizeFrame = 0;
+    const resizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => chart.resize());
+    });
     resizeObserver.observe(chartRef.current);
 
     return () => {
+      cancelAnimationFrame(resizeFrame);
       resizeObserver.disconnect();
       chart.dispose();
       chartInstanceRef.current = null;
     };
-  }, [cityAreaData, cityPointData, dormantCityData, visitedAreaRegions]);
+  }, [cityAreaData, cityPointData, dormantCityData, isCompactMap, shouldInitChart, visitedAreaRegions]);
 
   return (
     <motion.div
@@ -556,12 +613,19 @@ export function TravelMap({ items }: TravelMapProps) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_16%,rgba(66,255,238,0.16),transparent_23rem),radial-gradient(circle_at_76%_72%,rgba(91,130,255,0.12),transparent_28rem)]" />
       <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-cyan/50 to-transparent" />
 
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#030a14]/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+      <div ref={mapWrapperRef} className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#030a14]/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
         <div className="map-silk pointer-events-none absolute inset-0 opacity-80" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(45,213,221,0.08)_0,transparent_44%,rgba(3,8,18,0.76)_100%)]" />
 
         <div className="relative h-[520px] sm:h-[640px] lg:h-[760px]">
           <div ref={chartRef} className="h-full w-full" />
+          {!shouldInitChart ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm text-white/60 backdrop-blur-xl">
+                地图即将加载
+              </div>
+            </div>
+          ) : null}
           <div className="absolute right-4 top-4 z-10 flex overflow-hidden rounded-2xl border border-white/10 bg-[#06131d]/74 shadow-[0_18px_60px_rgba(0,0,0,0.36)] backdrop-blur-xl">
             <button
               aria-label="放大地图"
