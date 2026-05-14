@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#07121f"/><stop offset=".5" stop-color="#174264"/><stop offset="1" stop-color="#c46a4a"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="30"/></filter></defs>
+  <rect width="1200" height="900" fill="url(#g)"/>
+  <circle cx="930" cy="230" r="240" fill="#7dd3fc" opacity=".2" filter="url(#b)"/>
+  <circle cx="300" cy="620" r="220" fill="#f7d38a" opacity=".17" filter="url(#b)"/>
+  <path d="M0 640c200-90 310-20 520-60 230-42 350 40 680-55v375H0z" fill="#050913" opacity=".63"/>
+  <text x="80" y="770" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="700">青岛</text>
+  <text x="86" y="825" fill="#fff" opacity=".62" font-family="Arial, sans-serif" font-size="30">Red roofs / sea slope</text>
+</svg>

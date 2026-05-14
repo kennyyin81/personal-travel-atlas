@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#07131f"/><stop offset=".5" stop-color="#0e5b6b"/><stop offset="1" stop-color="#f7d38a"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="28"/></filter></defs>
+  <rect width="1200" height="900" fill="url(#g)"/>
+  <circle cx="960" cy="190" r="210" fill="#f7d38a" opacity=".24" filter="url(#b)"/>
+  <circle cx="250" cy="580" r="260" fill="#7dd3fc" opacity=".22" filter="url(#b)"/>
+  <path d="M0 610c160-40 250 35 400-5s260-110 440-45 230 30 360-20v360H0z" fill="#050913" opacity=".55"/>
+  <text x="80" y="770" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="700">厦门</text>
+  <text x="86" y="825" fill="#fff" opacity=".62" font-family="Arial, sans-serif" font-size="30">Coastline / salty breeze</text>
+</svg>

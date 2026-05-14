@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#120f13"/><stop offset=".55" stop-color="#3f2b38"/><stop offset="1" stop-color="#f7d38a"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="30"/></filter></defs>
+  <rect width="1200" height="900" fill="url(#g)"/>
+  <circle cx="850" cy="260" r="250" fill="#f7d38a" opacity=".22" filter="url(#b)"/>
+  <path d="M80 620h1040v90H80zM160 530h880v60H160zM250 450h700v50H250z" fill="#050913" opacity=".63"/>
+  <text x="80" y="770" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="700">西安</text>
+  <text x="86" y="825" fill="#fff" opacity=".62" font-family="Arial, sans-serif" font-size="30">Ancient wall / night walk</text>
+</svg>

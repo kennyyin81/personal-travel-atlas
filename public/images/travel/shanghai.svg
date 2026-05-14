@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#06111c"/><stop offset=".5" stop-color="#14334b"/><stop offset="1" stop-color="#7dd3fc"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="26"/></filter></defs>
+  <rect width="1200" height="900" fill="url(#g)"/>
+  <circle cx="880" cy="230" r="220" fill="#7dd3fc" opacity=".24" filter="url(#b)"/>
+  <circle cx="360" cy="690" r="240" fill="#f7d38a" opacity=".18" filter="url(#b)"/>
+  <path d="M120 700h90V430h90v270h70V320h110v380h80V500h100v200h80V370h120v330h210v200H120z" fill="#050913" opacity=".68"/>
+  <text x="80" y="190" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="700">上海</text>
+  <text x="86" y="245" fill="#fff" opacity=".62" font-family="Arial, sans-serif" font-size="30">Skyline / river night</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#09131a"/><stop offset=".52" stop-color="#234556"/><stop offset="1" stop-color="#d6e8d1"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="28"/></filter></defs>
+  <rect width="1200" height="900" fill="url(#g)"/>
+  <ellipse cx="610" cy="560" rx="460" ry="120" fill="#7dd3fc" opacity=".18" filter="url(#b)"/>
+  <circle cx="240" cy="210" r="220" fill="#f7d38a" opacity=".15" filter="url(#b)"/>
+  <path d="M0 685c200-130 360-80 520-130 170-54 330-140 680-20v365H0z" fill="#050913" opacity=".58"/>
+  <text x="80" y="770" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="700">杭州</text>
+  <text x="86" y="825" fill="#fff" opacity=".62" font-family="Arial, sans-serif" font-size="30">West Lake / soft rain</text>
+</svg>

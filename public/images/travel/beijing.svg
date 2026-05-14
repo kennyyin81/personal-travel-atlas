@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0b1220"/><stop offset=".55" stop-color="#28324a"/><stop offset="1" stop-color="#b98d56"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="30"/></filter></defs>
+  <rect width="1200" height="900" fill="url(#g)"/>
+  <circle cx="910" cy="190" r="210" fill="#f7d38a" opacity=".22" filter="url(#b)"/>
+  <circle cx="220" cy="600" r="230" fill="#7dd3fc" opacity=".16" filter="url(#b)"/>
+  <path d="M120 610h960v70H120zM220 510h760v80H220zM330 420h540v70H330z" fill="#050913" opacity=".58"/>
+  <text x="80" y="770" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="700">北京</text>
+  <text x="86" y="825" fill="#fff" opacity=".62" font-family="Arial, sans-serif" font-size="30">History / autumn archive</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0c1018"/><stop offset=".48" stop-color="#1d4850"/><stop offset="1" stop-color="#f1b76a"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="28"/></filter></defs>
+  <rect width="1200" height="900" fill="url(#g)"/>
+  <circle cx="230" cy="210" r="210" fill="#7dd3fc" opacity=".2" filter="url(#b)"/>
+  <circle cx="900" cy="660" r="240" fill="#f7d38a" opacity=".2" filter="url(#b)"/>
+  <path d="M120 720h120V500h80v220h95V400h95v320h90V300h80v420h400v180H120z" fill="#050913" opacity=".62"/>
+  <text x="80" y="190" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="700">广州</text>
+  <text x="86" y="245" fill="#fff" opacity=".62" font-family="Arial, sans-serif" font-size="30">Morning tea / river lights</text>
+</svg>

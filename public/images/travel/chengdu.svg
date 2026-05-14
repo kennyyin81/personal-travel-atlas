@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0d1714"/><stop offset=".52" stop-color="#29463b"/><stop offset="1" stop-color="#f7d38a"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="28"/></filter></defs>
+  <rect width="1200" height="900" fill="url(#g)"/>
+  <circle cx="260" cy="210" r="220" fill="#a7f3d0" opacity=".2" filter="url(#b)"/>
+  <circle cx="930" cy="640" r="250" fill="#f7d38a" opacity=".2" filter="url(#b)"/>
+  <path d="M0 640c180-70 330-35 470 20 180 70 360 55 730-80v320H0z" fill="#050913" opacity=".65"/>
+  <text x="80" y="770" fill="#fff" font-family="Arial, sans-serif" font-size="92" font-weight="700">成都</text>
+  <text x="86" y="825" fill="#fff" opacity=".62" font-family="Arial, sans-serif" font-size="30">Teahouse / slow living</text>
+</svg>
